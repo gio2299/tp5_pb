@@ -1,108 +1,145 @@
 # Project Charter — EquidadeJá Brasil
 
-> **Versão TP3 (revisada em 02/11/2026).** As seções alteradas ou novas em relação à versão do TP1/TP2 estão marcadas com **[TP3]**.
+**Projeto de Bloco:** Inteligência Artificial Aplicada
+**Autora:** Giovanna Silva
+**Etapa:** TP5 (versão final, com LLM e dashboard)
+**Metodologia:** TDSP (Team Data Science Process)
 
-## 1. Nome do Projeto
-**EquidadeJá Brasil** — Painel de monitoramento da equidade de gênero no mercado de trabalho brasileiro.
+---
 
-## 2. Contexto e Problema de Negócio
-Apesar de avanços legais e de discursos corporativos sobre diversidade, mulheres no Brasil ainda enfrentam desigualdades relevantes no mercado de trabalho: menor participação na força de trabalho, sub-representação em cargos de liderança e diferenças salariais persistentes em relação aos homens. Empresas com metas ESG, áreas de RH e formuladores de políticas públicas frequentemente têm dificuldade em acompanhar, de forma acessível e contextualizada, a evolução desses indicadores — e em traduzir números frios em ações concretas.
+## 1. Contexto e problema de negócio
 
-**Problema de negócio:** Falta de uma ferramenta que combine (i) indicadores oficiais e atualizados sobre participação e representatividade de gênero no mercado de trabalho, (ii) contexto qualitativo do noticiário sobre o tema, e (iii) interpretação acionável desses dados — hoje dispersos e sem conexão entre si.
+A desigualdade de gênero no mercado de trabalho brasileiro é acompanhada por indicadores oficiais, relatórios de transparência salarial e por uma produção contínua de notícias e artigos. Esse volume é grande, vem de fontes diferentes e está em texto livre, o que dificulta a leitura sistemática por quem precisa tomar decisões com base nele.
 
-### 2.1 Reavaliação do problema de negócio **[TP3]**
-Com as novas ferramentas incorporadas nesta etapa (FastAPI, Selenium e Streamlit multipágina), o problema de negócio permanece o mesmo, mas a forma de resolvê-lo ficou mais robusta, e as metas foram ajustadas:
+**Problema de negócio:** como transformar rapidamente textos jornalísticos e institucionais sobre equidade de gênero no trabalho em informação resumida, classificada e comparável, apoiando decisões de ESG e de políticas de diversidade?
 
-- **Integração com outros sistemas:** com a API FastAPI, os dados deixam de ficar presos ao dashboard. Um sistema de RH ou de relatórios ESG pode consultar os indicadores e as notícias por requisições HTTP (GET) e enviar novas notícias (POST), sem depender da interface.
-- **Contexto qualitativo mais profundo:** o RSS do Google News fornece apenas título, fonte, data e link. Com o Selenium, o texto completo das matérias passa a ser coletado, permitindo análises mais ricas (resumo, sentimento, perguntas e respostas) do que seria possível só com manchetes.
-- **Navegação mais clara:** o painel deixa de ser uma página única com abas e passa a ter várias páginas com menu lateral, o que facilita o uso por públicos não técnicos.
-- **Preparação para IA:** os dados coletados foram organizados em um corpus único, pronto para uso com LLMs na próxima etapa.
+## 2. Objetivos
 
-## 3. Objetivos do Projeto
-- Consolidar indicadores públicos sobre participação de mulheres na força de trabalho e representatividade em posições de liderança/decisão.
-- Coletar, via web scraping, notícias recentes sobre equidade de gênero no mercado de trabalho brasileiro, para dar contexto qualitativo aos números.
-- **[TP3]** Expor os dados por meio de uma API (FastAPI), permitindo consulta e envio de informações por outros sistemas.
-- **[TP3]** Extrair o texto completo das notícias por meio de scraping dinâmico (Selenium), ampliando o contexto qualitativo.
-- Utilizar um LLM (via engenharia de prompts) para gerar automaticamente resumos executivos e insights acionáveis, cruzando dados quantitativos com o noticiário coletado. **[TP3]** Esta funcionalidade foi reposicionada para a próxima etapa, e nesta fase os dados foram preparados para ela.
-- Apresentar tudo em um dashboard interativo em Streamlit, acessível para públicos não técnicos. **[TP3]** Agora com múltiplas páginas e menu de navegação.
+**Objetivo geral:** automatizar a sumarização de notícias sobre equidade de gênero no trabalho com um LLM, classificando cada uma por tema, ODS, relevância e sentimento, e apresentar o resultado em um dashboard interativo.
 
-## 4. Metas e Indicadores de Sucesso (KPIs)
-| Indicador | Meta para o projeto | Status |
+**Objetivos específicos:**
+1. Coletar notícias por RSS e web scraping e organizá-las em um corpus junto com indicadores de gênero.
+2. Gerar, com um LLM e engenharia de prompts, resumo, tema, ODS e relevância de cada notícia.
+3. Combinar essa saída com o sentimento calculado por um modelo local (TP4).
+4. Disponibilizar tudo em um dashboard com dados, gráficos e interação em tempo real com o modelo.
+5. Avaliar a qualidade dos resumos comparando-os com os textos originais.
+
+## 3. Escopo
+
+**Dentro do escopo**
+- 15 notícias do Google News (RSS), com texto completo extraído por Selenium.
+- Indicadores de gênero e trabalho (3 indicadores, de 2015 a 2022).
+- Resumo individual, tema, ODS, relevância e sentimento de cada notícia.
+- Briefing executivo gerado a partir de todos os resumos.
+- Resumo em tempo real de um texto colado pelo usuário.
+- Escolha do TP5: **Opção 2, automação de sumarização de textos com LLMs.**
+
+**Fora do escopo**
+- Previsão de tendências.
+- Relatórios de sustentabilidade em PDF.
+- Qualquer decisão automática sem revisão humana. Os resultados são sugestões.
+
+## 4. Stakeholders
+
+| Stakeholder | Interesse |
+|---|---|
+| Analistas de ESG e de RH | Acompanhar a pauta sem ler todos os textos |
+| Gestores de diversidade e inclusão | Usar o briefing para priorizar ações |
+| Estudantes e pesquisadores | Explorar os dados e os resumos no painel |
+
+## 5. Evolução do projeto
+
+O projeto foi construído em etapas, e cada uma alimenta a seguinte:
+
+| Etapa | Entrega |
+|---|---|
+| Dashboard | Aplicação Streamlit com múltiplas páginas: indicadores, notícias, nuvem de palavras, upload e download, API e sobre |
+| API | API FastAPI para consulta e envio de dados (indicadores, notícias e estatísticas) |
+| Web scraping | Coleta de manchetes por RSS (Beautiful Soup) e do texto completo das matérias por Selenium |
+| Corpus | Preparação de um corpus em CSV para uso com LLMs, com notícias e indicadores transformados em frases |
+| TP4 | Análise de sentimento com modelo de linguagem local (HuggingFace), integrada à API |
+| **TP5** | **Sumarização com LLM, avaliação dos resumos e página "Resumos IA" no dashboard** |
+
+## 6. Como os dados, a IA e a engenharia de prompts resolvem o problema
+
+**Dados.** As manchetes vêm do feed RSS do Google News (requests e Beautiful Soup). O texto completo de cada matéria foi extraído com Selenium. Esses textos, junto com os indicadores de gênero transformados em frases, formam o corpus usado pelo LLM.
+
+**Por que um LLM.** Notícias são texto livre. Em uma única chamada, o LLM resume o texto, extrai o tema, associa os ODS e estima a relevância, devolvendo tudo em JSON. Uma regra tradicional não faria isso.
+
+**Combinação de modelos.**
+
+| Tarefa | Modelo | Onde roda |
 |---|---|---|
-| Cobertura de dados históricos | Série de pelo menos 15 anos para os indicadores de participação no mercado de trabalho | Parcial: a amostra local atual cobre 2015–2022 (8 anos) |
-| Atualização dos dados | Coleta automatizada via API (sem necessidade de atualização manual) | Em andamento |
-| Volume de contexto qualitativo | Ao menos 10 manchetes recentes coletadas por execução do scraper | Atingido (15 manchetes) |
-| **[TP3]** Texto completo das notícias | Extrair o texto de ao menos 60% das notícias via Selenium | Atingido (14 de 15 notícias, 93%) |
-| **[TP3]** API de dados | Ao menos 2 rotas (GET e POST) documentadas e funcionais | Atingido (5 rotas: 4 GET e 1 POST) |
-| **[TP3]** Navegação | Aplicação com menu e ao menos 5 páginas | Atingido (página inicial + 6 páginas) |
-| Qualidade dos insights gerados | Resumos do LLM revisados e validados manualmente quanto à fidelidade aos dados (sem "alucinações") | Próxima etapa |
-| Usabilidade | Dashboard navegável por um usuário de RH/ESG sem necessidade de treinamento técnico | Em validação |
-| Adoção | Validação do protótipo por ao menos 1 usuário-teste da área de RH ou D&I | Próxima etapa |
+| Sentimento das manchetes | `lxyuan/distilbert-base-multilingual-cased-sentiments-student` | Local (HuggingFace), sem custo e sem internet |
+| Resumo, tema, ODS, relevância e briefing | `openai/gpt-oss-20b` | API do Groq, plano gratuito |
 
-## 5. ODS (Objetivos de Desenvolvimento Sustentável) Atendidos
-- **ODS 5 — Igualdade de Gênero:** o projeto monitora diretamente indicadores de participação econômica e representatividade de mulheres, centrais para acompanhar o progresso desse ODS no Brasil.
-- **ODS 8 — Trabalho Decente e Crescimento Econômico:** ao evidenciar disparidades na força de trabalho, o projeto contribui para o acompanhamento de metas relacionadas a emprego pleno e produtivo, e trabalho decente para todas as pessoas, sem distinção de gênero.
+Antes dessa escolha, duas opções não funcionaram: o Gemini (plano gratuito indisponível para o projeto, erro 403) e o `llama-3.3-70b-versatile` (erro 404, modelo não disponível na conta).
 
-**Justificativa:** Existem indicadores oficiais e mensuráveis para ambos os ODS (ex: taxa de participação feminina na força de trabalho, % de assentos ocupados por mulheres em posições de decisão), disponíveis em bases abertas como o Banco Mundial. Além disso, o tema é um pilar central da dimensão **Social (S)** do ESG, com forte demanda de empresas por instrumentos de acompanhamento.
+**Engenharia de prompt.** O prompt usa cinco técnicas:
+1. **Papel (system prompt):** analista de políticas públicas e ESG, especialista em equidade de gênero no trabalho.
+2. **Regras anti-alucinação:** usar somente o texto, escrever "não informado" quando faltar informação e nunca inventar números, nomes ou datas.
+3. **Saída estruturada em JSON** com as chaves `resumo` (até 3 frases), `tema`, `ods` e `relevancia`.
+4. **Few-shot:** um exemplo de saída dentro do prompt.
+5. **Temperatura baixa:** 0,2 para o resumo e 0,3 para o briefing, para respostas mais estáveis.
 
-## 6. Público-Alvo
-- Áreas de RH, Diversidade & Inclusão (D&I) e ESG em empresas.
-- Formuladores de políticas públicas voltadas à equidade de gênero.
-- ONGs e movimentos de defesa dos direitos das mulheres.
-- Pesquisadores, jornalistas de dados e estudantes interessados no tema.
-- **[TP3]** Desenvolvedores e sistemas internos de empresas, que passam a poder consumir os dados pela API.
+**Reprodutibilidade e custo.** Os resumos são gerados em lote e gravados em `Data/LLM/resumos_llm.csv`. O dashboard lê esse arquivo, então somente o briefing e o resumo de um texto novo chamam a API em tempo real.
 
-## 7. Escopo
-**Incluído neste projeto:**
-- Definição do problema, metas e ODS.
-- Estrutura do projeto em TDSP/CRISP-DM.
-- Coleta de dados via API (Banco Mundial — indicadores de gênero no mercado de trabalho).
-- Coleta de dados via Web Scraping (manchetes de notícias via feed RSS público).
-- **[TP3]** Scraping dinâmico com Selenium para extração do texto completo das matérias.
-- **[TP3]** API REST com FastAPI (consulta e envio de dados).
-- **[TP3]** Dashboard Streamlit com múltiplas páginas e menu de navegação.
-- **[TP3]** Preparação dos dados (corpus) para uso com LLMs.
-- Geração de insights com LLM via engenharia de prompts (API da Anthropic) — a ser integrada na próxima etapa.
+## 7. Alinhamento com os ODS e com o ESG
 
-**Fora do escopo (possíveis evoluções futuras):**
-- Deploy em ambiente de produção/nuvem.
-- Modelos preditivos (ex: previsão de evolução dos indicadores).
-- Análise de sentimento aprofundada do noticiário com NLP dedicado (será abordada de forma introdutória com LLM na próxima etapa).
+- **ODS 5 (Igualdade de gênero):** a solução acompanha a participação de mulheres na liderança e a igualdade de oportunidades.
+- **ODS 8 (Trabalho decente e crescimento econômico):** a solução acompanha a igualdade de remuneração para trabalho de igual valor.
+- **ESG:** o pilar Social (equidade e inclusão) e o pilar de Governança (transparência salarial, exigida pela Lei 14.611/2023) aparecem em quase todas as notícias analisadas.
 
-## 8. Stakeholders
-| Papel | Responsável | Interesse no projeto |
+## 8. Métricas de sucesso e resultados
+
+| Métrica | Resultado |
+|---|---|
+| Resumos gerados sem erro técnico | 15 de 15 |
+| Notícias com texto útil para resumir | 13 de 15 |
+| Qualidade dos resumos (avaliação manual das 13 avaliáveis) | 9 corretos, 4 parciais, 0 errados (69% corretos) |
+| Notícias associadas ao ODS 8 / ao ODS 5 | 13 de 15 / 11 de 15 |
+| Tema mais frequente | Remuneração (igualdade, desigualdade ou disparidade salarial): 8 de 15 |
+| Relevância atribuída pelo LLM | 13 alta, 1 média, 1 baixa |
+| Sentimento das manchetes (modelo local) | 11 negativo, 4 positivo, 0 neutro; 5 com confiança abaixo de 0,50 |
+
+**Método da avaliação.** Cada resumo foi comparado com o texto original e classificado como correto, parcial ou errado. Duas notícias ficaram fora da conta por não terem base para verificação (uma só com a manchete e outra cujo texto coletado era o menu do site). A avaliação preliminar foi feita com apoio do Claude, e a autora conferiu os resumos classificados como parciais contra os textos originais. O detalhe de cada nota está em `avaliacao_resumos.csv`.
+
+**Erros encontrados nos resumos parciais:**
+- Dado numérico mal interpretado: o texto dizia que a participação feminina subiu *para* 40,6%, e o resumo disse que *aumentou* 40,6%.
+- Fato trocado: a diferença de participação aumentou na pandemia, e o resumo disse que estagnou.
+- Causa simplificada: o custo de cuidados infantis foi apresentado como causa única, quando o texto fala em "alguns dos motivos".
+- ODS 5 e 8 atribuídos a um texto que cita apenas a Agenda 2030 de forma geral.
+
+## 9. Riscos e mitigação
+
+| Risco | Como se manifestou | Mitigação |
 |---|---|---|
-| Product Owner / Autor do projeto | Giovanna Silva | Entregar solução funcional e alinhada à disciplina |
-| Professor / Avaliador | Renan Silva Santos | Avaliar aderência aos métodos TDSP/CRISP-DM e qualidade técnica |
-| Usuário final (persona) | Analista de RH / ESG / D&I | Usar o dashboard para embasar decisões e relatórios |
-| **[TP3]** Sistemas consumidores | Sistemas internos de RH/ESG | Consultar os dados pela API FastAPI |
-| Fonte de dados quantitativos | Banco Mundial (World Bank Open Data API) | Fornecer indicadores confiáveis e atualizados |
-| Fonte de dados qualitativos | Google News (feed RSS público) e sites de notícias | Fornecer contexto noticioso recente sobre o tema |
-| Provedor de LLM | Anthropic (API Claude) | Gerar insights textuais a partir dos dados coletados |
+| Alucinação ou interpretação errada | 4 de 13 resumos parciais | Prompt restritivo, temperatura baixa, revisão humana e resultados tratados como sugestões |
+| Falha na coleta | Em uma notícia, o texto coletado era o menu do site, mas o campo `base_resumo` indicou "texto completo" | Registrar a limitação; no futuro, validar o conteúdo coletado e não só o tamanho |
+| Truncamento de texto | Cada notícia é enviada ao LLM com no máximo 4.000 caracteres, e há textos de até cerca de 15 mil | Documentar a limitação; no futuro, resumir em partes |
+| Sentimento mede o tom, não o impacto | Manchete com avanço para a equidade classificada como negativa, e o inverso | Mostrar a confiança e tratar como indicador auxiliar |
+| Dependência de API externa | Troca de provedor e de modelo durante o desenvolvimento, e limites do plano gratuito | Resumos salvos em CSV, para o painel funcionar sem nova chamada |
+| Privacidade e direitos autorais | Textos de notícias públicas são enviados a uma API externa | Uso acadêmico, apenas conteúdo jornalístico público, sem dados pessoais |
+| Segurança da chave de API | Chave guardada no arquivo `.env` | `.env` fora do repositório (`.gitignore`) e `.env.example` sem a chave |
 
-## 9. Premissas e Riscos
-**Premissas:**
-- As APIs e feeds públicos escolhidos permanecerão disponíveis e gratuitos.
-- O usuário terá uma chave de API da Anthropic válida para gerar os insights (etapa de LLM); sem ela, o app funciona normalmente nas demais páginas.
-- **[TP3]** Para usar a página "API" do dashboard, o servidor FastAPI precisa estar em execução localmente (`uvicorn api:app --port 8000`).
-- **[TP3]** O Google Chrome precisa estar instalado para executar o scraping com Selenium.
+## 10. Ciclo de Ciência de Dados
 
-**Riscos:**
-- Instabilidade da API do Banco Mundial ou do feed de notícias (mitigação: cache local + dados de amostra como fallback).
-- Insights gerados por LLM podem conter interpretações imprecisas (mitigação: prompt restringe o modelo a usar apenas os dados fornecidos, e o texto é sempre apresentado como sugestão, não como fato definitivo).
-- Estrutura de páginas de notícias pode mudar (mitigação: uso de feed RSS, mais estável que scraping de HTML de páginas de notícia).
-- **[TP3]** Sites de notícias podem bloquear robôs ou ter paywall, o que impede a extração do texto completo (mitigação: registrar a taxa de sucesso e manter a manchete como fallback).
-- **[TP3]** O Google News pode alterar o formato dos links de redirecionamento do RSS, quebrando o scraping dinâmico (mitigação: manter o script simples e revisar periodicamente).
-- **[TP3]** A página da API depende do servidor local estar ligado (mitigação: mensagem clara de erro e instruções de inicialização na própria página).
-- **[TP3]** Direitos autorais sobre o texto completo das matérias (mitigação: uso restrito a fins acadêmicos, sem republicação do conteúdo no painel).
+O projeto cobre o ciclo completo:
+1. **Coleta:** RSS e Selenium.
+2. **Preparação:** corpus de notícias e indicadores em frases.
+3. **Modelagem com IA:** sentimento local e sumarização com LLM.
+4. **Avaliação:** conferência manual dos resumos contra os textos originais.
+5. **Comunicação:** dashboard Streamlit com dados, gráficos e interação com o modelo.
 
-## 10. Cronograma Macro (alinhado às fases TDSP)
-| Fase TDSP | Entrega | Status |
-|---|---|---|
-| Business Understanding | Project Charter, definição de ODS e público-alvo | ✅ Concluído (revisado no TP3) |
-| Data Acquisition & Understanding | Data Summary Report, coleta via API e Web Scraping | ✅ Concluído (ampliado no TP3 com Selenium) |
-| **[TP3]** Aplicação e API | Streamlit multipágina + API FastAPI | ✅ Concluído no TP3 |
-| **[TP3]** Preparação para LLM | Corpus organizado em `Data/LLM/corpus_llm.csv` | ✅ Concluído no TP3 |
-| Modeling | Integração de LLM: resumo, sentimento e perguntas e respostas | 🔲 Próxima etapa |
-| Deployment | Dashboard final integrando todas as fontes e a IA | 🔲 Próxima etapa |
-| Customer Acceptance | Validação com usuário-teste, ajustes finais | 🔲 Próxima etapa |
+## 11. Entregáveis
+
+- Código: `resumidor.py`, `pages/8_Resumos_IA.py` e os demais arquivos do projeto.
+- Dados: `Data/LLM/corpus_llm.csv` e `Data/LLM/resumos_llm.csv`.
+- Avaliação: `avaliacao_resumos.csv`.
+- Documentação: este Project Charter, o `Data_Summary_Report.md`, o `Apresentacao_Solucao_Final.md` (com os prints do dashboard em `Docs/img/`) e o `README.md`.
+
+## 12. Uso de IA
+
+- **Em tempo de execução:** modelo local de sentimento (HuggingFace) e modelo `openai/gpt-oss-20b` via API do Groq, para resumo, tema, ODS, relevância e briefing.
+- **No desenvolvimento:** o Claude (Anthropic) foi usado como apoio ao código (`resumidor.py` e a página do dashboard), à depuração, à avaliação preliminar dos resumos e à redação desta documentação, com revisão da autora.
+- Resultados de IA podem conter erros e viés. As informações dos resumos foram conferidas contra os textos originais, e os casos divergentes estão registrados na avaliação.

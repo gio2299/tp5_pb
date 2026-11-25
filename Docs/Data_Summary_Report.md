@@ -1,102 +1,132 @@
 # Data Summary Report — EquidadeJá Brasil
 
-> **Versão TP3 (revisada em 02/11/2026).** As seções alteradas ou novas em relação à versão anterior estão marcadas com **[TP3]**.
+**Projeto de Bloco:** Inteligência Artificial Aplicada
+**Autora:** Giovanna Silva
+**Etapa:** TP5 (versão final, com LLM e dashboard)
+**Metodologia:** TDSP (Team Data Science Process)
 
-## 1. Objetivo deste documento
-Relacionar todas as fontes de dados utilizadas no projeto EquidadeJá Brasil, indicando tipo de dado, formato de acesso e finalidade de uso — cobrindo as frentes de coleta do projeto: **API**, **Web Scraping (estático e dinâmico)** e **entrada para o LLM**. **[TP3]** Este documento também descreve os arquivos gerados e como os dados são servidos pela API do projeto.
+---
 
-## 2. Fontes de Dados
+## 1. Fontes de dados
 
-### 2.1 World Bank Open Data API (dados quantitativos — API)
-- **URL:** https://api.worldbank.org/v2/
-- **Tipo de dado:** Série temporal numérica por país/ano.
-- **Formato de acesso:** API REST pública, sem chave/autenticação, retorno em JSON.
-- **Indicadores utilizados:**
-  - `SL.TLF.CACT.FE.ZS` — Taxa de participação na força de trabalho, mulheres (% da população feminina 15+).
-  - `SL.TLF.CACT.MA.ZS` — Taxa de participação na força de trabalho, homens (% da população masculina 15+).
-  - `SG.GEN.PARL.ZS` — Proporção de assentos ocupados por mulheres em parlamentos nacionais (%), usado como proxy de representatividade em posições de decisão.
-- **Objetivo de uso:** Base quantitativa principal do dashboard — evolução histórica da diferença de participação de gênero no mercado de trabalho e da representatividade em posições de decisão no Brasil.
-- **Observações:** dados podem ter defasagem de 1–2 anos; tratados com cache local (`Sample Data/`) como fallback.
-- **[TP3] Situação atual:** o painel multipágina lê a amostra local `Sample Data/amostra_indicadores_genero.csv`, que cobre os anos de 2015 a 2022 e contém 3 indicadores: taxa de participação na força de trabalho de mulheres e de homens, e proporção de assentos ocupados por mulheres no parlamento. Esses dados também são servidos pela rota `GET /indicadores` da API do projeto.
-
-### 2.2 Google News RSS Feed (dados qualitativos — Web Scraping estático)
-- **URL base:** `https://news.google.com/rss/search?q={termo}&hl=pt-BR&gl=BR&ceid=BR:pt-419`
-- **Tipo de dado:** Texto (título, link, data de publicação, fonte) de notícias recentes.
-- **Formato de acesso:** Feed RSS público (XML), consumido via requisição HTTP e parsing de XML (Beautiful Soup) — caracteriza **Web Scraping** de uma fonte pública estruturada.
-- **Termos de busca utilizados:** "equidade de gênero trabalho Brasil", "diferença salarial mulheres homens Brasil", "mulheres liderança empresas Brasil".
-- **Objetivo de uso:** Fornecer contexto qualitativo e atual (eventos, políticas, movimentos recentes) para complementar os indicadores numéricos, e servir de insumo para a geração de insights via LLM.
-- **Observações:** o feed fornece apenas título, fonte, data e link. Os links do RSS são redirecionamentos do Google News e não levam diretamente ao texto da matéria.
-- **[TP3] Volume atual:** 15 manchetes coletadas.
-
-### 2.3 Páginas das matérias via Selenium (dados qualitativos — Web Scraping dinâmico) **[TP3 — fonte nova]**
-- **URL:** links das 15 manchetes do feed RSS (`news.google.com/rss/articles/...`), que redirecionam para os sites originais dos veículos.
-- **Tipo de dado:** Texto completo das matérias (parágrafos) e URL final do artigo.
-- **Formato de acesso:** páginas HTML carregadas em um navegador Chrome automatizado (Selenium, modo headless). O redirecionamento do Google News é feito por JavaScript, o que torna o Beautiful Soup insuficiente: é preciso um navegador real que execute o script e aguarde o carregamento da página de destino.
-- **Script:** `scraping_selenium.py`.
-- **Arquivo gerado:** `Data/Processed/noticias_completas.csv`.
-- **Objetivo de uso:** obter o conteúdo integral das matérias para análises mais profundas com LLMs na próxima etapa (resumo, classificação de sentimento, perguntas e respostas).
-- **Resultado da coleta:** texto extraído de 14 das 15 notícias (93%). Uma notícia falhou nas duas tentativas, mesmo com reinício automático do Chrome (erro de conexão com o navegador); para ela, o corpus de LLM usa apenas o título.
-- **Limitações:** alguns sites podem bloquear robôs, exigir assinatura (paywall) ou alterar o HTML; o script extrai apenas parágrafos com mais de 60 caracteres e, por isso, pode omitir trechos curtos. O resultado depende do estado dos sites no momento da execução.
-
-### 2.4 API da Anthropic (Claude) — geração de insights via LLM
-- **Tipo de dado:** Texto gerado (resumo executivo / insight) a partir de um prompt estruturado.
-- **Formato de acesso:** API REST (`api.anthropic.com/v1/messages`), requer chave de API própria do usuário.
-- **Entrada do prompt (dados que alimentam o LLM):**
-  - Resumo estatístico dos indicadores do Banco Mundial (últimos valores e tendência).
-  - Lista de manchetes coletadas via Web Scraping (título + fonte + data).
-  - **[TP3]** Texto completo das matérias, obtido via Selenium.
-- **Objetivo de uso:** Gerar, em linguagem natural, um resumo executivo e um insight acionável para o público de RH/ESG, cruzando dados quantitativos e qualitativos — sem que o modelo invente números não presentes nos dados fornecidos (restrição aplicada via engenharia de prompt).
-- **Observações:** funcionalidade opcional — caso o usuário não tenha uma chave de API configurada, o dashboard continua funcional nas demais páginas.
-- **[TP3] Situação atual:** nesta etapa os dados foram **preparados** para o uso com LLM (ver seção 3). A integração do modelo ao painel será feita na próxima etapa.
-
-## 3. Arquivos de dados do projeto **[TP3]**
-
-| Arquivo | Origem | Colunas | Uso |
+| Fonte | Técnica | Arquivo gerado | Conteúdo |
 |---|---|---|---|
-| `Sample Data/amostra_indicadores_genero.csv` | World Bank (amostra local) | `ano`, `valor`, `indicador` | Página "Indicadores", rota `/indicadores` |
-| `Data/Processed/noticias_equidade.csv` | Google News RSS | `titulo`, `fonte`, `data`, `link` | Página "Notícias", rotas `/noticias` |
-| `Data/Processed/corpus_noticias.txt` | Texto das manchetes | texto corrido | Página "Nuvem de Palavras" |
-| `Data/Processed/noticias_completas.csv` | Selenium | colunas de `noticias_equidade.csv` + `url_final`, `texto`, `tamanho_texto` | Insumo para o corpus de LLM |
-| `Data/LLM/corpus_llm.csv` | Notícias + indicadores | `tipo`, `titulo`, `fonte`, `data`, `conteudo` | Corpus único para as tarefas com LLM |
+| Feed RSS do Google News (busca: equidade de gênero e mercado de trabalho, pt-BR) | `requests` e Beautiful Soup (`coletor_noticias.py`) | `Data/Processed/noticias_equidade.csv` e `corpus_noticias.txt` | 15 manchetes: título, fonte, data e link |
+| Páginas das matérias | Selenium com Chrome headless (`scraping_selenium.py`) | `Data/Processed/noticias_completas.csv` | URL final, texto e tamanho do texto |
+| Indicadores de gênero e trabalho | Arquivo local (`Sample Data/amostra_indicadores_genero.csv`), identificado como "World Bank / amostra local" | Corpus em `Data/LLM/corpus_llm.csv` | 24 registros transformados em frases |
+| LLM `openai/gpt-oss-20b` (Groq) | Chamada de API (`resumidor.py`) | `Data/LLM/resumos_llm.csv` | Resumo, tema, ODS e relevância |
 
-**Sobre o corpus de LLM:** cada notícia vira um documento (`título + texto completo`), e cada valor de indicador é convertido em uma frase em linguagem natural (ex.: "Em 2019, o indicador 'Taxa de participação na força de trabalho - Mulheres (%)' foi de 55.1."), pois modelos de linguagem interpretam texto melhor do que tabelas.
+**Período das notícias:** de 09/03/2022 a 18/09/2026 (data de publicação informada pelo feed).
+**Período dos indicadores:** de 2015 a 2022.
 
-## 4. API do projeto (FastAPI) **[TP3]**
-Os dados acima são servidos por uma API REST (`api.py`), executada com `uvicorn api:app --port 8000`. A documentação interativa é gerada automaticamente em `http://localhost:8000/docs`.
+Os 3 indicadores são:
+- Taxa de participação na força de trabalho, mulheres (%)
+- Taxa de participação na força de trabalho, homens (%)
+- Assentos ocupados por mulheres no parlamento (%)
 
-| Método | Rota | Função | Parâmetros |
-|---|---|---|---|
-| GET | `/` | Verifica se a API está no ar | nenhum |
-| GET | `/indicadores` | Lista os indicadores | `ano_inicio`, `ano_fim` (opcionais) |
-| GET | `/noticias` | Lista as notícias coletadas | `fonte`, `limite` (opcionais) |
-| POST | `/noticias` | Cadastra uma nova notícia | JSON: `titulo`, `fonte`, `data`, `link` |
-| GET | `/estatisticas` | Total de notícias e média por indicador | nenhum |
+## 2. Fluxo dos dados
 
-## 5. Resumo em Tabela
+```mermaid
+flowchart TD
+    A["Google News RSS"] --> B["noticias_equidade.csv<br/>15 manchetes"]
+    B --> C["Selenium<br/>texto completo"]
+    C --> D["noticias_completas.csv"]
+    D --> E["preparar_corpus.py"]
+    F["Indicadores de gênero<br/>3 indicadores, 2015 a 2022"] --> E
+    E --> G["corpus_llm.csv<br/>15 notícias + 24 indicadores"]
+    G --> H["Sentimento<br/>modelo local HuggingFace"]
+    G --> I["Resumo, tema, ODS e relevância<br/>LLM via API Groq"]
+    H --> J["resumos_llm.csv"]
+    I --> J
+    J --> K["Dashboard Streamlit<br/>página Resumos IA"]
+```
 
-| Fonte | Tipo de Dado | Formato | Método de Coleta | Uso no Projeto | Status |
-|---|---|---|---|---|---|
-| World Bank API | Numérico, série temporal | JSON via API REST | API | Indicadores quantitativos do dashboard e da API | ✅ Integrado (amostra local, 3 indicadores, 2015–2022) |
-| Google News RSS | Texto (manchetes) | XML (RSS) | Web Scraping estático | Contexto qualitativo + insumo para o LLM | ✅ Integrado (15 manchetes) |
-| **[TP3]** Páginas das matérias | Texto completo | HTML dinâmico | Web Scraping com Selenium | Insumo para resumo, sentimento e Q&A | ✅ Integrado (14/15 com texto) |
-| Anthropic API (Claude) | Texto gerado | JSON via API REST | Geração via LLM / prompt engineering | Insight executivo combinando dados + notícias | 🔲 Dados preparados; integração na próxima etapa |
+Em texto: Google News RSS → `noticias_equidade.csv` → Selenium (texto completo) → `noticias_completas.csv` → `preparar_corpus.py` → `corpus_llm.csv` → sentimento (modelo local) e resumo (LLM) → `resumos_llm.csv` → dashboard Streamlit.
 
-## 6. Qualidade e limitações dos dados **[TP3]**
-- **Cobertura temporal:** a amostra de indicadores cobre 2015–2022, abaixo da meta de 15 anos definida no Project Charter. A ampliação da série é uma melhoria pendente.
-- **Volume de notícias:** 15 manchetes, volume pequeno e suficiente para a demonstração, mas limitado para análises estatísticas.
-- **Viés de seleção:** as notícias dependem dos termos de busca e do ranking do Google News, o que pode privilegiar certos veículos.
-- **Datas variadas:** o feed traz matérias de datas bem distintas (de 2022 a 2026), de modo que nem todas são "recentes".
-- **Texto extraído:** o texto vem de parágrafos da página e pode incluir trechos de menus, chamadas ou publicidade; a limpeza é feita em `preparar_corpus.py` (remoção de espaços extras).
+## 3. Volume
 
-## 7. Considerações Éticas e de Direitos Autorais
-- O feed RSS é uma interface pública desenhada para consumo/syndication e é preferido ao scraping direto de HTML sempre que possível.
-- **[TP3]** O texto completo das matérias coletado com Selenium é usado apenas para fins acadêmicos e de análise. O painel exibe títulos, fontes e links, e direciona o usuário à fonte original; o conteúdo integral não é republicado.
-- **[TP3]** O scraping usa pausas entre as requisições (1 segundo) para não sobrecarregar os sites.
-- Os insights gerados por LLM serão apresentados como **sugestões geradas por IA**, não como fatos definitivos, e o prompt instruirá o modelo a não inventar dados fora do que foi fornecido. Modelos de linguagem podem ter vieses e imprecisões, e a validação das informações é responsabilidade da autora.
+| Item | Valor |
+|---|---|
+| `corpus_llm.csv` | 39 linhas (15 notícias e 24 indicadores) e 5 colunas |
+| `resumos_llm.csv` | 15 linhas e 11 colunas |
+| Fontes distintas de notícias | 15 |
+| Tamanho dos textos das notícias | de 76 a 15.641 caracteres (mediana de cerca de 6.400) |
 
-## 8. Próximos Passos
-- Integrar o LLM ao painel: resumo das matérias, classificação de sentimento e perguntas e respostas sobre os dados.
-- Ampliar a série histórica dos indicadores (meta de 15 anos) e conectar a coleta diretamente à API do Banco Mundial.
-- Avaliar inclusão de dados do IBGE (PNAD Contínua) para detalhamento nacional/regional, como fonte complementar.
-- Coletar feedback de um usuário-teste da área de RH/D&I sobre a utilidade do painel e dos insights.
-- Validar periodicamente se os termos de busca e o scraping continuam retornando resultados relevantes.
+**Fontes das notícias:** viva.com.br, poder360.com.br, Universidade Federal do Paraná, FIA, ufop.br, Sapicuá, O Globo, Migalhas, Brasil de Fato, Blog do IBRE (FGV), Nova Escola, CartaCapital, FIEMG, Abramed e CNN Brasil.
+
+## 4. Dicionário de dados
+
+### 4.1 `Data/LLM/resumos_llm.csv`
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `titulo` | texto | Manchete da notícia |
+| `fonte` | texto | Veículo ou site de origem |
+| `data` | texto | Data de publicação informada pelo feed |
+| `base_resumo` | texto | "texto completo" ou "apenas manchete", conforme o tamanho do conteúdo coletado |
+| `resumo` | texto | Resumo de até 3 frases gerado pelo LLM |
+| `tema` | texto | Tema de 2 a 4 palavras atribuído pelo LLM |
+| `ods` | texto | Números de ODS separados por vírgula (vazio quando não há) |
+| `relevancia` | texto | alta, média ou baixa para a pauta de equidade de gênero no trabalho |
+| `sentimento` | texto | `positive`, `neutral` ou `negative`, pelo modelo local |
+| `confianca_sentimento` | número | Confiança do modelo, de 0 a 1 |
+| `erro` | texto | Mensagem de erro da chamada ao LLM (vazio quando deu certo) |
+
+### 4.2 `Data/LLM/corpus_llm.csv`
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `tipo` | texto | "noticia" ou "indicador" |
+| `titulo` | texto | Manchete (notícias) ou "Indicador" |
+| `fonte` | texto | Veículo (notícias) ou "World Bank / amostra local" |
+| `data` | texto ou número | Data de publicação (notícias) ou ano (indicadores) |
+| `conteudo` | texto | Título e texto da matéria, ou o indicador escrito em uma frase |
+
+## 5. Qualidade dos dados
+
+| Aspecto | Resultado |
+|---|---|
+| Erros técnicos na geração dos resumos | 0 de 15 |
+| Notícias com texto útil | 13 de 15 |
+| Notícias só com a manchete | 1 (item 11), indicada corretamente em `base_resumo` |
+| Notícias com texto coletado incorreto | 1 (item 5): o texto era o menu do site e não o artigo |
+| `ods` vazio | 2 notícias |
+| `tema` "não informado" | 1 notícia |
+
+**Observação sobre o item 5.** O campo `base_resumo` marcou "texto completo" por engano, porque a regra considera apenas o tamanho do conteúdo (mais de 300 caracteres além do título) e não o seu conteúdo. O LLM respondeu corretamente que o texto não trazia informação sobre o tema, mas a relevância "baixa" e o tema "não informado" refletem a falha de coleta, não o assunto da matéria.
+
+**Tratamento aplicado** (em `preparar_corpus.py`):
+- Remoção de espaços repetidos nos textos.
+- Junção de título e texto em um único campo.
+- Conversão dos indicadores em frases, porque LLMs interpretam texto melhor que tabelas.
+
+**Limitações:**
+- Amostra pequena (15 notícias), que não permite generalizar os resultados.
+- Truncamento em 4.000 caracteres por notícia no envio ao LLM, que afeta os textos mais longos.
+- Os indicadores vêm de uma amostra local, e não de uma consulta direta à API do Banco Mundial.
+
+## 6. Integração dos dados
+
+Os dados de RSS (manchetes), de Selenium (texto completo) e dos indicadores foram unificados em um único corpus (`corpus_llm.csv`). Sobre ele, o modelo local acrescentou o sentimento e o LLM acrescentou resumo, tema, ODS e relevância, gerando o `resumos_llm.csv`. É esse arquivo que alimenta os gráficos e as tabelas do dashboard, sem depender de novas chamadas à API.
+
+## 7. Resultados da análise
+
+| Resultado | Valor |
+|---|---|
+| Notícias associadas ao ODS 8 | 13 de 15 |
+| Notícias associadas ao ODS 5 | 11 de 15 |
+| Tema mais frequente | Remuneração (igualdade, desigualdade ou disparidade salarial): 8 de 15 |
+| Relevância atribuída pelo LLM | 13 alta, 1 média, 1 baixa |
+| Sentimento das manchetes | 11 negativo, 4 positivo, 0 neutro |
+| Sentimentos com confiança abaixo de 0,50 | 5 de 15 |
+| Qualidade dos resumos (13 avaliáveis) | 9 corretos, 4 parciais, 0 errados |
+
+O detalhe da avaliação de cada resumo está em `avaliacao_resumos.csv`.
+
+## 8. Ferramentas
+
+Python, pandas, requests, Beautiful Soup, Selenium, Transformers (HuggingFace), Streamlit, Plotly e API do Groq (`openai/gpt-oss-20b`).
+
+## 9. Uso de IA
+
+O sentimento é calculado por um modelo local da HuggingFace. O resumo, o tema, os ODS, a relevância e o briefing são gerados pelo modelo `openai/gpt-oss-20b` via API do Groq. O Claude (Anthropic) foi usado como apoio ao código, à avaliação preliminar dos resumos e à redação desta documentação, com revisão da autora. Resultados de IA podem conter erros e viés, e por isso os resumos foram conferidos contra os textos originais.
